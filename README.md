@@ -25,7 +25,7 @@ Failing any of these measures, the proper autonomous routine must be selected pr
 
 ## Field
 
-All the properties regarding the VEX Robotics competition field are defined in '`field.h`' as an instantiable object. Once instantiated, a visual of the field is drawn to VEX V5 Robot Brain display. Additionally, '`field.h`' provides methods to convert the robot's absolute (immediate) coordinates to field coordinates.
+All the properties regarding the VEX Robotics competition field are defined in '`field.h`' as an instantiable object. Once instantiated, a visual of the field is drawn to VEX V5 Robot Brain display. Additionally, '`field.h`' provides methods to convert the robot's absolute (immediate) coordinates to field coordinates and display rendering the robot's navigation atop the field visual.
 
 ## Robot
 
