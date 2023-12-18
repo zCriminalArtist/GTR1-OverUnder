@@ -16,15 +16,24 @@ The 7 autonomous routines are defined in '`autonomous.h`' as an instantiable obj
 Drivetrain control is hard since it requires two equally essential elements:
 - A way to measure your robots position
 - A way to move your robot to a desired position
+
 Traditionally, teams implement a controller that drives straight some specified distance, switches to using the gyro to turn, and repeats this for the duration of their drivetrain control. While this solution works, it is not the most robust.
+
 The most optimal way to specify robot movement I believe is to instruct the drivetrain of the robot to navigate to specific coordinates on the field. This method eleminates the need to update later instructions in the autonomous program when a change is made to earlier instructions. Such a controller is implemented via a "Pure Pursuit" algorithm.
 
 ##### Step 1
-The first step to employing the controller is to feed it a sequence of coordinates. 
+The first step is to feed the controller a sequence of coordinates. 
 
-Defining a `MotionPath` instance will accomplish this.
+Define a `MotionPath` instance with a set of coordinates.
 ```
 MotionPath path1 = MotionPath({ {0, 30}, {5, 15}, {40, 15}, {38, 0} }).trajectory(40, 25, -40, 5.0).reverse();
+```
+Invoke the `trajectory` member to specify the starting acceleration, maximum velocity, ending acceleration, and the sensitivity around sharp turns. Finally, the `reverse` member can be included if the drivetrain is to drive in reverse.
+
+##### Step 2
+Next and final step is to instruct the controller to follow the generated trajectory.
+```
+Robot.Drive.follow(path1);
 ```
 
 ### Selecting Autonomous Routines
