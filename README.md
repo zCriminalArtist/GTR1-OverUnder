@@ -10,7 +10,22 @@ At the start of the program the GUI displayed on the VEX V5 Robot Brain display 
 
 ### Programming Autonomous Routines
 
-The 7 autonomous routines are defined in '`autonomous.h`' as an instantiable object of three parameters. The first parameter specifies which of the 4 starting tiles that autonomous can operate on. The next parameter declares the starting position of the robot at the start of the autonomous routine. The third parameter is where the autonomous routine is to be written.
+The 7 autonomous routines are defined in '`autonomous.h`' as an instantiable object of three parameters. The first parameter specifies which of the 4 starting tiles that autonomous can operate on. The next parameter declares the starting position of the robot at the start of the autonomous routine. The third parameter is where the autonomous routine is to be written. 
+
+#### Controlling the Drivetrain
+Drivetrain control is hard since it requires two equally essential elements:
+- A way to measure your robots position
+- A way to move your robot to a desired position
+Traditionally, teams implement a controller that drives straight some specified distance, switches to using the gyro to turn, and repeats this for the duration of their drivetrain control. While this solution works, it is not the most robust.
+The most optimal way to specify robot movement I believe is to instruct the drivetrain of the robot to navigate to specific coordinates on the field. This method eleminates the need to update later instructions in the autonomous program when a change is made to earlier instructions. Such a controller is implemented via a "Pure Pursuit" algorithm.
+
+##### Step 1
+The first step to employing the controller is to feed it a sequence of coordinates. 
+
+Defining a `MotionPath` instance will accomplish this.
+```
+MotionPath path1 = MotionPath({ {0, 30}, {5, 15}, {40, 15}, {38, 0} }).trajectory(40, 25, -40, 5.0).reverse();
+```
 
 ### Selecting Autonomous Routines
 
