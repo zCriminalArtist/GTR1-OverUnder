@@ -5,7 +5,7 @@
 #include <iostream>
 
 #define PI atan(1)*4
-#define WHEEL_DIAMETER 2.9
+#define WHEEL_DIAMETER 3.0
 #define PPR500 9/50
 #define PPR5120 9/512
 
@@ -68,7 +68,8 @@ void odometry::updateRobotPosition() {
 
   while (true) {
     // currentForwardRotation = forwardRotation.position(rev)*PPR500;
-    currentForwardRotation = -1.0*((leftMotorB.position(rev) + rightMotorB.position(rev))/2.0);
+    // std::cout << "RightMotorC: " << rightMotorC.position(rev) << " LeftMotorC: " << leftMotorC.position(rev) <<std::endl;
+    currentForwardRotation = ((leftMotorC.position(rev) + rightMotorC.position(rev))/2.0);
     currentLeftRotation = leftRotation.position(rev)*PPR500;
     currentRightRotation = rightRotation.position(rev)*PPR500;
     currentHorizontalRotation = horizontalRotation.position(rev)*PPR500;

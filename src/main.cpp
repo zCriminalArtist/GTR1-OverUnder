@@ -28,7 +28,7 @@ void pre_auton(void) {
   vex::thread([]() { Field.chooseAutonomousPrompt(); });
   vex::thread([]() { Robot.updateRobotPosition(); });
   vex::thread([]() { Field.updateRobotPositionOnField(); });
-  vex::thread([]() { Robot.autoFlywheel(Autonomous.selectedAutonomous, Autonomous.isRunning()); });
+  vex::thread([]() { Robot.startInSize(); });
   // Robot.displayAnimatedSplashScreen("3dsaulcover.gif", 30, 0);
   // Robot.displaySplashScreen("splashscreen.png");
 }
@@ -40,12 +40,10 @@ void autonomous(void) {
 }
 
 void usercontrol(void) {
-  Robot.setFlywheelSpeed(2200);
   Robot.resetRuntime();
   Robot.setToggleIntakeSpeed(100);
   LeftDrive.stop(coast);
   RightDrive.stop(coast);
-  pivot.open();
   Robot.displayRobotColors();
   // Brain.Screen.drawImageFromFile("3dsaulcover.png", 0, 0);
   while (true) {
@@ -61,58 +59,85 @@ void usercontrol(void) {
         }
         while (Controller1.ButtonX.pressing()) {}
       }
-      // Toggle Shooter Raiser
-      if (Controller1.ButtonY.pressing()) {
-        if (!raiser.value()) { 
-          raiser.open();
-        } else {
-          raiser.close();
+      // Intake Control
+      Controller1.ButtonL1.pressed([](){
+        vex::thread([](){
+            Robot.toggleIntake(vex::forward, Robot.getToggleIntakeSpeed());
+            if (!Robot.isIntakeExtended()) Robot.extendIntake();
+
+            wait(200, msec);
+            if (Controller1.ButtonL1.pressing()) { 
+              Intake.spin(vex::reverse, Robot.getToggleIntakeSpeed(), pct);
+              Controller1.rumble(".");
+            }
+
+            // if (!intakeExtend.value()) {
+            //   Intake.spin(vex::forward, Robot.getToggleIntakeSpeed(), pct);
+            // }
+            // intakeExtend.set(!intakeExtend.value());
+            // intakeRetract.set(intakeExtend.value());
+        });
+        Controller1.rumble(".");
+      });
+      Controller1.ButtonL1.released([]() {
+        if (Intake.direction() == vex::reverse) {
+          Robot.stopIntake();
         }
-        while (Controller1.ButtonY.pressing()) {}
-      }
-      // Toggle Auto Flywheel
-      if (Controller1.ButtonB.pressing()) {
-        Robot.toggleAutoFlywheel();
-        Robot.setFlywheelSpeed(2500);
-        while (Controller1.ButtonB.pressing()) {}
-      }
-      // Aim
+      });
+      // Catapult Control
       Controller1.ButtonL2.pressed([](){
         vex::thread([](){ 
-          Robot.aim(Robot.Odometer.getGoalDirection(Autonomous.getSelectedAutonomous().getStartingPosition(), Autonomous.getSelectedAutonomous().getChosenQuadrant()));
+          Robot.fireCatapult();
+          Robot.drawCatapult();
         });
-        Controller1.rumble("-");
+        Controller1.rumble(".");
       });
+      Controller1.ButtonR1.pressed([](){
+        Robot.toggleFielding();
+        if (Robot.isFielding()) {
+          Controller1.rumble(".");
+        } else {
+          Controller1.rumble("-");
+        }
+      });
+
+      // Aim
+      // Controller1.ButtonL2.pressed([](){
+      //   vex::thread([](){ 
+      //     Robot.aim(Robot.Odometer.getGoalDirection(Autonomous.getSelectedAutonomous().getStartingPosition(), Autonomous.getSelectedAutonomous().getChosenQuadrant()));
+      //   });
+      //   Controller1.rumble("-");
+      // });
       // Intake Out (Hold)
-      if (Controller1.ButtonL1.pressing()) {
-        Intake.spin(vex::reverse, Robot.getToggleIntakeSpeed(), pct);
-      }
-      Controller1.ButtonL1.released([]() {
-        Intake.stop(coast);
-      });
-      // Roller CCW (Hold)
-      if (Controller1.ButtonR1.pressing()) {
-        Roller.spin(vex::forward, 100, pct);
-      }
-      Controller1.ButtonR1.released([]() {
-        Roller.stop(coast);
-      });
-      // Shoot
-      if (Controller1.ButtonR2.pressing()) {
-        vex::thread([](){ Controller1.rumble("-"); });
-      }
-      Controller1.ButtonR2.pressed([]() {
-        Roller.stop(coast);
-        vex::thread([](){ 
-          pivot.close();
-          vex::wait(500, msec);
-          Roller.spin(vex::reverse, 40, pct);
-        });
-      });
-      Controller1.ButtonR2.released([]() {
-        Roller.stop(coast);
-        pivot.open();
-      });
+      // if (Controller1.ButtonL1.pressing()) {
+      //   Intake.spin(vex::reverse, Robot.getToggleIntakeSpeed(), pct);
+      // }
+      // Controller1.ButtonL1.released([]() {
+      //   Intake.stop(coast);
+      // });
+      // Catapult CCW (Hold)
+      // if (Controller1.ButtonR1.pressing()) {
+      //   Catapult.spin(vex::forward, 100, pct);
+      // }
+      // Controller1.ButtonR1.released([]() {
+      //   Catapult.stop(coast);
+      // });
+      // // Shoot
+      // if (Controller1.ButtonR2.pressing()) {
+      //   vex::thread([](){ Controller1.rumble("-"); });
+      // }
+      // Controller1.ButtonR2.pressed([]() {
+      //   Roller.stop(coast);
+      //   vex::thread([](){ 
+      //     pivot.close();
+      //     vex::wait(500, msec);
+      //     Roller.spin(vex::reverse, 40, pct);
+      //   });
+      // });
+      // Controller1.ButtonR2.released([]() {
+      //   Roller.stop(coast);
+      //   pivot.open();
+      // });
       if (!Robot.tankDrive) {
         //Left Joystick - Drive
         if (abs(Controller1.Axis3.value() + Controller1.Axis4.value()) < 10) {
@@ -122,13 +147,13 @@ void usercontrol(void) {
           }
         } else {
           Robot.Drive.stop();
-          // LeftDrive.spin(vex::reverse, (pow(Controller1.Axis3.value()/100.0, 3.0)*100.0 + pow(Controller1.Axis4.value()/100.0, 3.0)*100.0), pct);
-          RightDrive.spin(vex::reverse, (pow(Controller1.Axis3.value()/100.0, 3.0)*100.0 - pow(Controller1.Axis4.value()/100.0, 3.0)*100.0), pct);
-          Intake.spin(vex::forward, Robot.getToggleIntakeSpeed(), pct);
-          vex::thread([]() {
-            vex::task::sleep(10000);
-            Intake.stop(coast);
-          });
+          LeftDrive.spin(vex::forward, (pow(Controller1.Axis3.value()/100.0, 3.0)*100.0 + pow(Controller1.Axis4.value()/100.0, 3.0)*100.0), pct);
+          RightDrive.spin(vex::forward, (pow(Controller1.Axis3.value()/100.0, 3.0)*100.0 - pow(Controller1.Axis4.value()/100.0, 3.0)*100.0), pct);
+          // Intake.spin(vex::forward, Robot.getToggleIntakeSpeed(), pct);
+          // vex::thread([]() {
+          //   vex::task::sleep(10000);
+          //   Intake.stop(coast);
+          // });
         }
       } else {
         // Split arcade
@@ -139,15 +164,13 @@ void usercontrol(void) {
           }
         } else {
           if (abs(Controller1.Axis3.value() + Controller1.Axis1.value()) > 40) vex::thread([]() { Robot.Drive.stop(); });
-          // LeftDrive.spin(vex::reverse, (pow(Controller1.Axis3.value()/100.0, 3.0)*50.0 + (((abs(Controller1.Axis2.value())) < 90) ? pow(Controller1.Axis1.value()/100.0, 3.0)*(Controller1.ButtonL2.pressing() ? 5.0 : 30.0) : 0)), vex::velocityUnits::pct);
-          RightDrive.spin(vex::reverse, (pow(Controller1.Axis3.value()/100.0, 3.0)*50.0 - (((abs(Controller1.Axis2.value())) < 90) ? pow(Controller1.Axis1.value()/100.0, 3.0)*(Controller1.ButtonL2.pressing() ? 5.0 : 30.0) : 0)), vex::velocityUnits::pct);
-          Intake.spin(vex::forward, Robot.getToggleIntakeSpeed(), pct);
-          Roller.spin(vex::forward, 100, pct);
-          vex::thread([]() {
-            vex::task::sleep(10000);
-            Intake.stop(coast);
-            if (Roller.velocity(pct) > 50) Roller.stop(coast);
-          });
+          LeftDrive.spin(vex::forward, (pow(Controller1.Axis3.value()/100.0, 3.0)*50.0 + (((abs(Controller1.Axis2.value())) < 90) ? pow(Controller1.Axis1.value()/100.0, 3.0)*(Controller1.ButtonL2.pressing() ? 5.0 : 30.0) : 0)), vex::velocityUnits::pct);
+          RightDrive.spin(vex::forward, (pow(Controller1.Axis3.value()/100.0, 3.0)*50.0 - (((abs(Controller1.Axis2.value())) < 90) ? pow(Controller1.Axis1.value()/100.0, 3.0)*(Controller1.ButtonL2.pressing() ? 5.0 : 30.0) : 0)), vex::velocityUnits::pct);
+          // Intake.spin(vex::forward, Robot.getToggleIntakeSpeed(), pct);
+          // vex::thread([]() {
+          //   vex::task::sleep(10000);
+          //   Intake.stop(coast);
+          // });
         }
       }
       //Intake

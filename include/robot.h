@@ -16,9 +16,25 @@ class robot {
     drivetrainControl Drive = drivetrainControl(pidPaths, Odometer, autonomousControl);
     //Intake
     void toggleIntake(vex::directionType direction, int speed);
+    void stopIntake();
     int getToggleIntakeSpeed();
     void setToggleIntakeSpeed(int speed);
+    bool isIntakeExtended() { return intakeExtend.value(); }
+    void extendIntake() {
+      intakeExtend.open();
+      intakeRetract.close();
+    }
+    void retractIntake() { 
+      intakeExtend.close();
+      intakeRetract.open();
+    }
     void autoToggleIntake();
+    void startInSize();
+    //Catapult
+    bool isFielding() { return fielding; }
+    void toggleFielding();
+    void fireCatapult();
+    void drawCatapult();
     //Flywheel
     void setFlywheelSpeed(unsigned int rpm) { flywheelSpeed = rpm; }
     unsigned int getFlywheelSpeed() { return flywheelSpeed; }
@@ -59,7 +75,39 @@ class robot {
     int intakeSpeed;
     bool driftToggle = false;
     bool intakeToggle = false;
+    bool fielding = false;
 };
+
+void robot::toggleFielding() {
+  fielding = !fielding;
+  Controller1.Screen.clearScreen();
+  if (isFielding()) {
+    Controller1.Screen.setCursor(1, 10);
+    Controller1.Screen.print("Fielding");
+  }
+}
+
+void robot::startInSize() {
+  wait(2000, msec);
+  toggleFielding();
+  drawCatapult();
+  retractIntake();
+}
+
+void robot::drawCatapult() {
+  while ((catapultRotation.angle() < (isFielding() ? 45 : 60)) || (catapultRotation.angle() > 350)) {
+    if (!isIntakeExtended()) extendIntake();
+    // std::cout << "Angle: " << catapultRotation.angle() << " InSize?: " << ((catapultRotation.angle() < 60) || (catapultRotation.angle() > 350)) <<  std::endl;
+    Catapult.spin(vex::reverse);
+    wait(10, msec);
+  }
+  Catapult.stop(hold);
+}
+
+void robot::fireCatapult() {
+  if (!isIntakeExtended()) extendIntake();
+  Catapult.spinFor(vex::reverse, 15, rotationUnits::deg, true);
+}
 
 void robot::shoot(unsigned int i) {
   pivot.close();
@@ -95,28 +143,6 @@ void robot::toggleRaiser() {
     raiser.close();
   }
 }
-
-// void robot::autoFlywheel(autonomousProgram* selectedAutonomous) {
-//   vex::task::sleep(2000);
-//   flywheelSpeed = 3150;
-//   PolynomialRegression<double> flywheelKinematics;
-//   flywheelKinematics.addPoint(98.0) = 2800.0;
-//   flywheelKinematics.addPoint(115.0) = 2950.0;
-//   flywheelKinematics.addPoint(130.0) = 3150.0;
-//   flywheelKinematics.fit();
-//   Flywheel.spin(vex::forward);
-//   while (true) { // Down is 0 && raiserToggle = false 
-//     double dist = Odometer.getDistanceFromGoal(selectedAutonomous->getStartingPosition(), selectedAutonomous->getChosenQuadrant());
-//     if (useAutoFlywheel) {
-//       if (raiserToggle) toggleRaiser();
-//       flywheelSpeed = flywheelKinematics.calculate(dist);
-//       Flywheel.spin(vex::forward, flywheelSpeed/6, rpm);
-//     } else {
-//       Flywheel.spin(vex::forward, flywheelSpeed/6, rpm);
-//     }
-//     vex::task::sleep(20);
-//   }
-// }
 
 void robot::autoFlywheel(autonomousProgram* selectedAutonomous, bool& isRunning) {
   vex::task::sleep(100);
@@ -177,26 +203,40 @@ void robot::aim(double degrees) {
   aimed = true;
 }
 
+void robot::stopIntake() {
+  Intake.stop(coast);
+  intakeToggle = false;
+}
+
 void robot::autoToggleIntake() {
   vex::task::sleep(2000);
   while (1) { 
     // std::cout << Intake.velocity(pct) << " " << Intake.current(pct) << std::endl;
-    if ((fabs(Intake.velocity(pct)) < 10) && (Intake.current(pct) > 80)) {
-      Intake.spin(reverse, 50, pct);
-      wait(380, msec);
-      Intake.spin(vex::forward, getToggleIntakeSpeed(), pct);
-      wait(1000, msec);
+    // if ((fabs(Intake.velocity(pct)) < 10) && (Intake.current(pct) > 80)) {
+    //   Intake.spin(reverse, 50, pct);
+    //   wait(380, msec);
+    //   Intake.spin(vex::forward, getToggleIntakeSpeed(), pct);
+    //   wait(1000, msec);
+    // }
+    if (isFielding()) {
+      if ((intakeOptic.hue() > 97.0) && (intakeOptic.hue() < 110) && intakeOptic.isNearObject()) stopIntake();
+    } else {
+      if ((catapultOptic.hue() > 99.0) && (catapultOptic.hue() < 110) && catapultOptic.isNearObject()) stopIntake();
     }
+    
+    // std::cout << "Hue: " << catapultOptic.hue() << std::endl;
+    // std::cout << "IsNearObject: " << catapultOptic.isNearObject() << std::endl;
+    //     std::cout << "Hue: " << intakeOptic.hue() << std::endl;
+    // std::cout << "IsNearObject: " << intakeOptic.isNearObject() << std::endl;
+    wait(300, msec);
   }
 }
 
 void robot::toggleIntake(vex::directionType direction, int speed) {
   if (!intakeToggle) {
     Intake.spin(direction, speed, pct);
-    Roller.spin(vex::forward, 100, pct);
   } else {
     Intake.spin(direction, 0, pct);
-    Roller.stop(coast);
   }
   robot::intakeSpeed = speed;
   robot::intakeToggle = !robot::intakeToggle;

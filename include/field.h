@@ -141,18 +141,23 @@ struct field {
 };
 
 const double* field::FieldVisual::FieldCentricCoordtoAbs(double _x, double _y) const {
-  if (getSelectedQuadrant() == 1) return (new double[2]{ getX() + getLength() - _y*getLength()/144, getY() + _x*getLength()/144 }); 
-  if (getSelectedQuadrant() == 2) return (new double[2]{ getX() + _y*getLength()/144, getY() + _x*getLength()/144 }); 
-  if (getSelectedQuadrant() == 3) return (new double[2]{ getX() + _y*getLength()/144, getY() + getLength() - _x*getLength()/144 }); 
-  if (getSelectedQuadrant() == 4) return (new double[2]{ getX() + getLength() - _y*getLength()/144, getY() + getLength() - _x*getLength()/144 }); 
+  if (getSelectedQuadrant() == 1) return (new double[2]{ getX() + getLength() - _x*getLength()/144, getY() + _y*getLength()/144 }); 
+  if (getSelectedQuadrant() == 2) return (new double[2]{ getX() - _x*getLength()/144, getY() + _y*getLength()/144 }); 
+  if (getSelectedQuadrant() == 3) return (new double[2]{ getX() + _x*getLength()/144, getY() + getLength() - _y*getLength()/144 });
+  if (getSelectedQuadrant() == 4) return (new double[2]{ getX() + getLength() + _x*getLength()/144, getY() + getLength() - _y*getLength()/144 });  
+
+  // if (getSelectedQuadrant() == 1) return (new double[2]{ getX() + getLength() - _y*getLength()/144, getY() + _x*getLength()/144 }); 
+  // if (getSelectedQuadrant() == 2) return (new double[2]{ getX() + _y*getLength()/144, getY() + _x*getLength()/144 }); 
+  // if (getSelectedQuadrant() == 3) return (new double[2]{ getX() + _y*getLength()/144, getY() + getLength()/2 + _x*getLength()/144 }); 
+  // if (getSelectedQuadrant() == 4) return (new double[2]{ getX() + getLength() - _y*getLength()/144, getY() + getLength()/2 + _x*getLength()/144 }); 
   return (new double[2]{_x, _y});
 }
 
 const double field::FieldVisual::FieldCentricHeadingtoAbs(double heading) const {
-  if (getSelectedQuadrant() == 1) return (PI - heading); 
-  if (getSelectedQuadrant() == 2) return (-heading); 
-  if (getSelectedQuadrant() == 3) return (-heading); 
-  if (getSelectedQuadrant() == 4) return (PI - heading); 
+  if (getSelectedQuadrant() == 1) return (-PI/2 - heading); 
+  if (getSelectedQuadrant() == 2) return (-PI/2 - heading); 
+  if (getSelectedQuadrant() == 3) return (PI/2 - heading); 
+  if (getSelectedQuadrant() == 4) return (PI/2 - heading); 
   return heading;
 }
 

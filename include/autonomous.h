@@ -7,19 +7,31 @@
 struct autonomous {
   autonomous(robot& _Robot) : Robot(_Robot) {}
   autonomousProgram* selectedAutonomous;
-  autonomousProgram* routine1 = new autonomousProgram(new int[4]{2, 4}, Vec(36, 5, 90), [this]() {
-    if (!Robot.autonomousControl.isDisabled()) Robot.displaySplashScreen("splashscreen.png");
-    if (!Robot.autonomousControl.isDisabled()) Robot.toggleAutoFlywheel();
-    Robot.Drive.setTimeout(600);
-    Robot.Drive.setTolTimeout(200);
+  autonomousProgram* routine1 = new autonomousProgram(new int[4]{2, 4}, Vec(-36, 3, 0), [this]() {
+    Robot.Drive.setTimeout(200);
+    Robot.Drive.setTolTimeout(50);
     Robot.Drive.setTolerance(10);
+    if (!Robot.autonomousControl.isDisabled()) Robot.extendIntake();
+    MotionPath path1 = MotionPath({ {0, 5}, {0, 19}, {25, 19}, {25, 27}, {25, 36} }).trajectory(80, 30, -20, 5.0);
+    Robot.Drive.follow(path1);
+    if (!Robot.autonomousControl.isDisabled()) Robot.toggleIntake(vex::reverse, Robot.getToggleIntakeSpeed());
+    wait(2000, msec);
+    if (!Robot.autonomousControl.isDisabled()) Robot.toggleIntake(vex::reverse, Robot.getToggleIntakeSpeed());
+    MotionPath path2 = MotionPath({ {25, 30}, {25, 27}, {25, 19}, {0, 19}, {0, 5}}).trajectory(80, 30, -20, 5.0).reverse();
+    Robot.Drive.follow(path2);
+    if (!Robot.autonomousControl.isDisabled()) Robot.toggleIntake(vex::forward, Robot.getToggleIntakeSpeed());
+    MotionPath path3 = MotionPath({ {0, 5}, {0, 30}, {-7, 40}, {-7, 60} }).trajectory(20, 30, -20, 5.0);
+    Robot.Drive.follow(path3);
+    wait(500, msec);
+    MotionPath path4 = MotionPath({ {-6, 55}, {-15, 45}, {-20, 55} }).trajectory(20, 30, -20, 5.0).reverse();
+    Robot.Drive.follow(path4);
   });
-  autonomousProgram* routine2 = new autonomousProgram(new int[4]{2, 4}, Vec(36, 0, 0), [this]() {});
-  autonomousProgram* routine3 = new autonomousProgram(new int[4]{2, 4}, Vec(36, 0, 0), [this]() {});
-  autonomousProgram* routine4 = new autonomousProgram(new int[4]{1, 3}, Vec(36, 0, 90), [this]() {});
-  autonomousProgram* routine5 = new autonomousProgram(new int[4]{1, 3}, Vec(36, 0, 0), [this]() {});
-  autonomousProgram* routine6 = new autonomousProgram(new int[4]{1, 3}, Vec(36, 0, 0), [this]() {});
-  autonomousProgram* skills   = new autonomousProgram(new int[4]{1, 3}, Vec(36, 0, 0), [this]() {});
+  autonomousProgram* routine2 = new autonomousProgram(new int[4]{2, 4}, Vec(-36, 3, 0), [this]() {});
+  autonomousProgram* routine3 = new autonomousProgram(new int[4]{2, 4}, Vec(-36, 3, 0), [this]() {});
+  autonomousProgram* routine4 = new autonomousProgram(new int[4]{1, 3}, Vec(36, 3, 0), [this]() {});
+  autonomousProgram* routine5 = new autonomousProgram(new int[4]{1, 3}, Vec(36, 3, 0), [this]() {});
+  autonomousProgram* routine6 = new autonomousProgram(new int[4]{1, 3}, Vec(36, 3, 0), [this]() {});
+  autonomousProgram* skills   = new autonomousProgram(new int[4]{1, 3}, Vec(36, 3, 0), [this]() {});
   void run() {
     running = !Robot.autonomousControl.isDisabled();
     selectedAutonomous->run();

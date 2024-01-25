@@ -15,7 +15,11 @@ extern motor rightMotorC;
 extern motor leftMotorC;
 extern motor_group RightDrive;
 extern motor Intake;
+extern optical intakeOptic;
 extern motor Roller;
+extern motor Catapult;
+extern optical catapultOptic;
+extern rotation catapultRotation;
 extern motor_group Flywheel;
 extern pneumatics pivot;
 extern pneumatics raiser;
@@ -27,6 +31,9 @@ extern encoder rightRotation;
 extern encoder horizontalRotation;
 extern pwm_out leds;
 extern optical optic;
+
+extern pneumatics intakeExtend;
+extern pneumatics intakeRetract;
 
 /**
  * Used to initialize code/tasks/devices added using tools in VEXcode Pro.

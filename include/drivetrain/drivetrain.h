@@ -108,8 +108,10 @@ void drivetrainControl::follow(MotionPath& path) {
     auto [leftTargetVelocity, rightTargetVelocity] = path.calculateVelocity(curvature, closestPt);
     auto [leftTargetAcceleration, rightTargetAcceleration] = path.calculateAcceleration(curvature, closestPt);
 
-    double actualLeftVelocity = RPMtoVelocity(leftRotation.velocity(velocityUnits::rpm)*PPR500);
-    double actualRightVelocity = RPMtoVelocity(rightRotation.velocity(velocityUnits::rpm)*PPR500);
+    // double actualLeftVelocity = RPMtoVelocity(leftRotation.velocity(velocityUnits::rpm)*PPR500);
+    // double actualRightVelocity = RPMtoVelocity(rightRotation.velocity(velocityUnits::rpm)*PPR500);
+    double actualLeftVelocity = RPMtoVelocity(leftMotorC.velocity(velocityUnits::rpm));
+    double actualRightVelocity = RPMtoVelocity(rightMotorC.velocity(velocityUnits::rpm));
 
     leftVelocityPower = kV * leftTargetVelocity;
     leftAccelerationPower = kA * leftTargetAcceleration;
@@ -122,12 +124,12 @@ void drivetrainControl::follow(MotionPath& path) {
     double leftPower = leftVelocityPower + leftAccelerationPower + leftVelocityPID;
     double rightPower = rightVelocityPower + rightAccelerationPower + rightVelocityPID;
 
-    LeftDrive.spin(vex::reverse, leftPower, volt);
-    RightDrive.spin(vex::reverse, rightPower, volt);
+    LeftDrive.spin(vex::forward, leftPower, volt);
+    RightDrive.spin(vex::forward, rightPower, volt);
     
-    // std::cout << completion << std::endl;
-    // std::cout << kV * (leftTargetVelocity) << " + " << kA * leftTargetAcceleration << " + " <<  kP << " ( " << leftTargetVelocity << " - " << actualLeftVelocity << " ) = " << leftPower
-    // << "         " << kV * (rightTargetVelocity) << " + " << kA * rightTargetAcceleration << " + " <<  kP << " ( " << rightTargetVelocity << " - " << actualRightVelocity << " ) = " << rightPower  << std::endl;
+    std::cout << completion << std::endl;
+    std::cout << kV * (leftTargetVelocity) << " + " << kA * leftTargetAcceleration << " + " <<  kP << " ( " << leftTargetVelocity << " - " << actualLeftVelocity << " ) = " << leftPower
+    << "         " << kV * (rightTargetVelocity) << " + " << kA * rightTargetAcceleration << " + " <<  kP << " ( " << rightTargetVelocity << " - " << actualRightVelocity << " ) = " << rightPower  << std::endl;
 
     completion = (path.newPath.size() - 1) - path.lastClosestPtIndex;
     if (fabs(completion) < tolerance) {
